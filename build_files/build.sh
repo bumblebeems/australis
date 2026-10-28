@@ -5,23 +5,21 @@ set -ouex pipefail
 # Copy the contents of system_files/ of the git repo to /
 cp -avf "/ctx/system_files"/. /
 
-### Install packages
+### Modify packages
+PKG_DIR=/ctx/packages
 
-# Packages can be installed from any enabled yum repo on the image.
-# RPMfusion repos are available by default in ublue main images
-# List of rpmfusion packages can be found here:
-# https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/updates/43/x86_64/repoview/index.html&protocol=https&redirect=1
+read_pkgs() {
+    # 's/#.*//' drop comments, 's/^[[:space:]]*//' trim leading space, 's/[[:space:]]*$//' trim trailing space, '/^$/d' delete empty lines
+    sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d' "$1"
+}
 
-# this installs a package from fedora repos
-dnf5 install -y tmux
+# Install packages from build_files/packages/install-fedora.txt
+mapfile -t FEDORA_PKGS < <(read_pkgs "$PKG_DIR/install-fedora.txt")
 
-# Use a COPR Example:
-#
-# dnf5 -y copr enable ublue-os/staging
-# dnf5 -y install package
-# Disable COPRs so they don't end up enabled on the final image:
-# dnf5 -y copr disable ublue-os/staging
+# Install packages from build_files/packages/install-terra.txt
+mapfile -t TERRA_PKGS  < <(read_pkgs "$PKG_DIR/install-terra.txt")
 
-#### Example for enabling a System Unit File
+# Remove unwanted packages from base image
+mapfile -t REMOVE_PKGS < <(read_pkgs "$PKG_DIR/remove.txt")
 
-systemctl enable podman.socket
+# TODO: actually modify packages

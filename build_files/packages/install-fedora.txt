@@ -1,0 +1,23 @@
+# Install from: Fedora repos
+# Parsed by build_files/build.sh at image build time. One package per line. Text after # is ignored.
+
+# CLI
+bat                     # cat clone with improvements
+cdrskin                 # disc burning program
+git-delta               # delta: improved diff viewer
+eza                     # ls clone with improvements
+fd-find                 # fd: find if it didnt require a manpage to use
+fzf                     # CLI fuzzy finder, used in my fish config
+ripgrep                 # speedy grep alternative
+xorriso                 # data disc creation program (ISO)
+zoxide                  # cd for lazy people
+
+# GUI
+gamescope               # steamos microcompositor. helps with certain games
+mangohud                # game performance overlay
+mangohud.i686           # game performance overlay (32bit)
+k3b                     # disc ripping/burning software
+yakuake                 # quake-style dropdown terminal
+
+# FONTS
+ibm-plex-fonts-all

@@ -1,0 +1,8 @@
+# Install from: Terra (dnf5 --from-repo=terra)
+# Parsed by build_files/build.sh at image build time. One package per line. Text after # is ignored.
+
+amdgpu_top          # monitor for radeon GPUs
+bitwarden-cli       # cli password manager
+resources           # task manager
+steam               # video games
+starship            # shell prompt
