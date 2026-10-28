@@ -1,0 +1,3 @@
+[Flatpak Preinstall io.github.DenysMb.Kontainer]
+Branch=stable
+IsRuntime=false

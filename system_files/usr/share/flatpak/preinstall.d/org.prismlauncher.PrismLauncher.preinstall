@@ -1,0 +1,3 @@
+[Flatpak Preinstall org.prismlauncher.PrismLauncher]
+Branch=stable
+IsRuntime=false

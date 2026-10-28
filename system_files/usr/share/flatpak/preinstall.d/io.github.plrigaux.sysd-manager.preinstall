@@ -1,0 +1,3 @@
+[Flatpak Preinstall io.github.plrigaux.sysd-manager]
+Branch=stable
+IsRuntime=false

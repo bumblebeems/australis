@@ -1,0 +1,3 @@
+[Flatpak Preinstall org.kde.kolourpaint]
+Branch=stable
+IsRuntime=false
