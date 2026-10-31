@@ -1,4 +1,4 @@
-# Australis .𖥔 ݁ ˖ִ🛸༄˖°.
+# ༄˖°.🪐.ೃ࿔*:･ Australis .𖥔 ݁ ˖ִ🛸༄˖°.
 This is my personal bootable container image built on top of Universal Blue's [Aurora](https://getaurora.dev) (specifically, the Aurora-DX variant).
 
 ## Notable Changes
