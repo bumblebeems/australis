@@ -20,6 +20,7 @@ gamescope               # steamos microcompositor. helps with certain games
 mangohud                # game performance overlay
 mangohud.i686           # game performance overlay (32bit)
 k3b                     # disc ripping/burning software
+kdiff3                  # diff software
 yakuake                 # quake-style dropdown terminal
 
 # FONTS
