@@ -14,8 +14,8 @@ REMOVE_LIST="$PKG_DIR/del.txt"
 # A valid line is: optional package name, optional "# comment". Blank lines are valid.
 VALID_LINE='^[[:space:]]*([A-Za-z0-9._+-]+[[:space:]]*)?(#.*)?$'
 
-# Aurora sources mesa/libva/ffmpeg from negativo17's repos; these options make sure matching pkgs in Fedora's repos aren't pulled in by accident
-MULTIMEDIA_REPO_OPTS=(--enable-repo=fedora-multimedia --setopt=fedora-multimedia.priority=90)
+# Aurora sources mesa/libva/ffmpeg from negativo17's repos; these options make sure matching pkgs in Fedora's repos aren't pulled in by accident. Also exclude steam* so it's forced to come from Terra (negativo17's otherwise replaces it via its obsoletes and priority)
+MULTIMEDIA_REPO_OPTS=(--enable-repo=fedora-multimedia --setopt=fedora-multimedia.priority=90 --setopt=fedora-multimedia.excludepkgs='steam*')
 
 # 64bit and 32bit (i686) mesa packages that must have matching versions
 MESA_PKGS=(mesa-dri-drivers.x86_64 mesa-dri-drivers.i686 mesa-vulkan-drivers.x86_64 mesa-vulkan-drivers.i686)
