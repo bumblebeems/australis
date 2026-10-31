@@ -9,7 +9,6 @@ git-delta               # delta: improved diff viewer
 eza                     # ls clone with improvements
 fd-find                 # fd: find if it didnt require a manpage to use
 nmap                    # network scanning tool
-fzf                     # CLI fuzzy finder, used in my fish config
 ripgrep                 # speedy grep alternative
 trash-cli               # trash for the command line
 xorriso                 # data disc creation program (ISO)
