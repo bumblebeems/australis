@@ -1,22 +1,120 @@
 #!/bin/bash
+
+# -o pipefail: error if any part of the chain/pipeline fails | -u: throws error on unset variables | -e: exits for non-zero exit codes | -x: print all executed cmds to output
 set -ouex pipefail
 
-# Set variables for directories we will frequently be working within
+# =============================================================================
+# SETUP
+# =============================================================================
+
 CTX_DIR=/ctx
-PKG_DIR=$CTX_DIR/packages
+PKG_DIR="$CTX_DIR/packages"
+REMOVE_LIST="$PKG_DIR/del.txt"
+
+# A valid line is: optional package name, optional "# comment". Blank lines are valid.
+VALID_LINE='^[[:space:]]*([A-Za-z0-9._+-]+[[:space:]]*)?(#.*)?$'
+
+# Aurora sources mesa/libva/ffmpeg from negativo17's repos; these options make sure matching pkgs in Fedora's repos aren't pulled in by accident
+MULTIMEDIA_REPO_OPTS=(--enable-repo=fedora-multimedia --setopt=fedora-multimedia.priority=90)
+
+# 64bit and 32bit (i686) mesa packages that must have matching versions
+MESA_PKGS=(mesa-dri-drivers.x86_64 mesa-dri-drivers.i686 mesa-vulkan-drivers.x86_64 mesa-vulkan-drivers.i686)
+
+pkg_installed() {
+    rpm -q "$1" >/dev/null
+}
+
+# Prepare the lists in PKG_DIR to be passed to dnf. Input is expected to be validated first! See code below "Validate all lists..." comment
+parse_pkg_lists() {
+    # "s/#.*//" deletes text after a #, "s/[[:space:]]//g" deletes whitespace, "/^$/d" deletes empty lines
+    sed -e 's/#.*//' -e 's/[[:space:]]//g' -e '/^$/d' "$1"
+}
 
 # Copy the contents of system_files/ of the git repo to /
 cp -avf "$CTX_DIR/system_files"/. /
 
-### Modify packages
-read_pkgs() {
-    # 's/#.*//' drop comments, 's/^[[:space:]]*//' trim leading space, 's/[[:space:]]*$//' trim trailing space, '/^$/d' delete empty lines
-    sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d' "$1"
-}
+# =============================================================================
+# VALIDATE PACKAGE LISTS
+# =============================================================================
 
-# Read packages listed in build_files/packages/*
-mapfile -t FEDORA_PKGS < <(read_pkgs "$PKG_DIR/install-fedora.txt")
-mapfile -t TERRA_PKGS  < <(read_pkgs "$PKG_DIR/install-terra.txt") 
-mapfile -t REMOVE_PKGS < <(read_pkgs "$PKG_DIR/remove.txt")
+# Use nullglob when defining the next two arrays so the lists created are empty in the event of no matches
+shopt -s nullglob
+ADD_LISTS=("$PKG_DIR"/add-*.txt)
+ALL_LISTS=("$PKG_DIR"/*.txt)
+shopt -u nullglob
 
-# TODO: actually modify packages
+if [[ ${#ALL_LISTS[@]} -gt 0 ]]; then
+    # grep: "-v" shows lines that DON'T match, "-n" line numbers, "-H" file names. "-E" enables extended regex
+    # Run from PKG_DIR with bare names (##*/ strips the directory) so output reads del.txt:5:...
+    # ( ) is a subshell, so cd doesn't affect the rest of the script
+    if (cd "$PKG_DIR" && grep -HnvE "$VALID_LINE" "${ALL_LISTS[@]##*/}"); then
+        echo "Malformed package list(s), aborting" >&2
+        exit 1
+    fi
+fi
+
+# =============================================================================
+# INSTALL PACKAGES
+# =============================================================================
+
+# Install each add-<repo>.txt from <repo> ("fedora" = default repos). Non-Fedora repos must already exist as .repo files
+for list in "${ADD_LISTS[@]}"; do
+    repo=$(basename "$list" .txt)   # /ctx/packages/add-terra.txt -> add-terra
+    repo=${repo#add-}               # add-terra -> terra   (# removes a prefix)
+
+    # convert the output of parse_pkg_lists (which will be a block of packages to install separated by newlines) into an array
+    mapfile -t pkgs < <(parse_pkg_lists "$list")
+
+    if [[ ${#pkgs[@]} -eq 0 ]]; then
+        echo "$(basename "$list"): empty, skipping"
+    elif [[ $repo == fedora ]]; then
+        dnf5 -y install "${MULTIMEDIA_REPO_OPTS[@]}" "${pkgs[@]}"
+    else
+        dnf5 -y install "${MULTIMEDIA_REPO_OPTS[@]}" --from-repo="$repo" "${pkgs[@]}"
+    fi
+done
+
+# =============================================================================
+# REMOVE PACKAGES
+# =============================================================================
+
+REMOVE_PKGS=()
+if [[ -e $REMOVE_LIST ]]; then
+    mapfile -t REMOVE_PKGS < <(parse_pkg_lists "$REMOVE_LIST")
+fi
+
+# Filter out packages defined in the remove list that are not present in the base image
+TO_REMOVE=()
+for pkg in "${REMOVE_PKGS[@]}"; do
+    if pkg_installed "$pkg"; then
+        TO_REMOVE+=("$pkg")
+    else
+        echo "$(basename "$REMOVE_LIST"): $pkg not installed, skipping"
+    fi
+done
+
+if [[ ${#TO_REMOVE[@]} -gt 0 ]]; then
+    dnf5 -y remove "${TO_REMOVE[@]}"
+fi
+
+# =============================================================================
+# CHECKS
+# =============================================================================
+
+# Confirm that 32bit (i686) and 64bit mesa packages have the same version-release. A missing 32bit package also causes a failure
+mapfile -t MESA_VER < <(rpm -q --qf '%{VERSION}-%{RELEASE}\n' "${MESA_PKGS[@]}" | sort -u)
+if [[ ${#MESA_VER[@]} -ne 1 ]]; then
+    echo "Mesa mismatch:" >&2
+    # Show each package's version so the mismatch is obvious
+    rpm -q --qf '%{NAME}.%{ARCH} %{VERSION}-%{RELEASE}\n' "${MESA_PKGS[@]}" >&2 || true
+    exit 1
+fi
+
+# Validate that only Fedora's repos are left enabled in the image
+mapfile -t ENABLED < <(dnf5 repolist --enabled | awk '$1 != "repo" {print $1}')
+for enabled_repo in "${ENABLED[@]}"; do
+    if [[ $enabled_repo != fedora && $enabled_repo != updates && $enabled_repo != updates-archive ]]; then
+        echo "Unexpected enabled repo: $enabled_repo" >&2
+        exit 1
+    fi
+done
