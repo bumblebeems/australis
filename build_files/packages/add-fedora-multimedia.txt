@@ -1,0 +1,4 @@
+# Install from: negativo17 (fedora-multimedia repo)
+# Parsed by build_files/build.sh at image build time. One package per line. Text after # is ignored.
+
+libheif.i686    # Dependency pulled in when installing steam, but if I don't explicitly install it from this repo dnf picks from Fedora's default repos and downgrades the existing 64bit lib :/
