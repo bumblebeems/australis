@@ -1,0 +1,17 @@
+[Unit]
+Description=Turn off RGB on Kingston Fury RAM
+StartLimitIntervalSec=60
+StartLimitBurst=5
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStartPre=-/usr/bin/modprobe i2c-dev
+ExecStartPre=/usr/bin/sleep 5
+ExecStart=/usr/bin/python3 /usr/bin/furyctl.py --slot 2 --slot 4 off --yes
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
