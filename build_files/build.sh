@@ -20,6 +20,10 @@ MULTIMEDIA_REPO_OPTS=(--enable-repo=fedora-multimedia --setopt=fedora-multimedia
 # 64bit and 32bit (i686) mesa packages that must have matching versions
 MESA_PKGS=(mesa-dri-drivers.x86_64 mesa-dri-drivers.i686 mesa-vulkan-drivers.x86_64 mesa-vulkan-drivers.i686)
 
+# Blex = Plex Mono Nerd Font, pinned to a nerd-fonts release. sha256 from the GitHub release asset
+BLEX_URL="https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/IBMPlexMono.tar.xz"
+BLEX_SHA256="3d226683be9fc35f98683837568497f300307bc9b7aefc1617a368f190ef963a"
+
 pkg_installed() {
     rpm -q "$1" >/dev/null
 }
@@ -96,6 +100,15 @@ done
 if [[ ${#TO_REMOVE[@]} -gt 0 ]]; then
     dnf5 -y remove "${TO_REMOVE[@]}"
 fi
+
+# =============================================================================
+# FONTS
+# =============================================================================
+
+curl -fsSL --retry 3 -o /tmp/IBMPlexMono.tar.xz "$BLEX_URL"
+echo "$BLEX_SHA256  /tmp/IBMPlexMono.tar.xz" | sha256sum -c -
+mkdir -p /usr/share/fonts/blexmono-nerd
+tar -xJf /tmp/IBMPlexMono.tar.xz -C /usr/share/fonts/blexmono-nerd --wildcards 'BlexMonoNerdFontMono-*.ttf' LICENSE.txt
 
 # =============================================================================
 # CHECKS
