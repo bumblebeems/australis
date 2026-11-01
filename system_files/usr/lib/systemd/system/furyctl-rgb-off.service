@@ -2,7 +2,6 @@
 Description=Turn off RGB on Kingston Fury RAM
 StartLimitIntervalSec=60
 StartLimitBurst=5
-After=multi-user.target
 
 [Service]
 Type=oneshot
