@@ -1,7 +1,8 @@
 # Remove from: base image 
 # Parsed by build_files/build.sh at image build time. One package per line. Text after # is ignored.
 
-mariadb-server          # leftover orphan
-kate                    # I prefer kwrite for text/quick edits and vscode for larger projects
+mariadb                 # leftover from akonadi, which aurora already removes
+mariadb-server
+kate                    # I prefer kwrite or nano for text/quick edits and vscode for larger projects
 kate-plugins
 kate-krunner-plugin
