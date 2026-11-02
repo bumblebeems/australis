@@ -177,6 +177,21 @@ set_os_release BUG_REPORT_URL "https://github.com/bumblebeems/australis/issues"
 set_os_release DEFAULT_HOSTNAME "australis"
 
 # =============================================================================
+# ENFORCE SIGNED IMAGES
+# =============================================================================
+
+# Require australis images to be signed with our cosign key before existing installs will accept updates
+POLICY=/etc/containers/policy.json
+jq --arg repo "$IMG_REPO" '
+    .transports.docker[$repo] = [{
+        "type": "sigstoreSigned",
+        "keyPaths": ["/usr/lib/pki/containers/australis.pub"],
+        "signedIdentity": {"type": "matchRepository"}
+    }]
+' "$POLICY" > /tmp/policy.json
+cp /tmp/policy.json "$POLICY"
+
+# =============================================================================
 # INSTALL ADDITIONAL FONTS
 # =============================================================================
 
@@ -206,3 +221,9 @@ for enabled_repo in "${ENABLED[@]}"; do
         exit 1
     fi
 done
+
+# Validate that policy.json has our signing rule (otherwise unsigned images would be accepted)
+if ! jq -e --arg repo "$IMG_REPO" '.transports.docker[$repo][0].type == "sigstoreSigned"' "$POLICY" >/dev/null; then
+    echo "Signature policy rule for $IMG_REPO missing from $POLICY" >&2
+    exit 1
+fi
