@@ -7,9 +7,17 @@ set -ouex pipefail
 # SETUP
 # =============================================================================
 
+# Source directory
 CTX_DIR=/ctx
-PKG_DIR="$CTX_DIR/rpm"
-REMOVE_LIST="$PKG_DIR/del.txt"
+
+# Paths to RPM package lists to install/remove
+RPM_DIR="$CTX_DIR/rpm"
+RPM_DEL_LIST="$RPM_DIR/del.txt"
+
+# Flatpak preinstall stuff
+FPK_DIR="$CTX_DIR/flatpak"                              # Directory that contains Flatpak package lists to install
+FPK_ADD_LIST="$FPK_DIR/add.txt"                         # Currently Flathub is the only supported remote and there is no removal logic as the only flatpak in the base image is Bazaar
+FPK_PREINSTALL_DIR=/usr/share/flatpak/preinstall.d      # Location to save generated .preinstall files
 
 # A valid line is: optional package name, optional "# comment". Blank lines are valid.
 VALID_LINE='^[[:space:]]*([A-Za-z0-9._+-]+[[:space:]]*)?(#.*)?$'
@@ -28,7 +36,7 @@ pkg_installed() {
     rpm -q "$1" >/dev/null
 }
 
-# Prepare the lists in PKG_DIR to be passed to dnf. Input is expected to be validated first! See code below "Validate all lists..." comment
+# Prepare the lists in RPM_DIR to be passed to dnf. Input is expected to be validated first! See code below "VALIDATE PACKAGE LISTS" section below
 parse_pkg_lists() {
     # "s/#.*//" deletes text after a #, "s/[[:space:]]//g" deletes whitespace, "/^$/d" deletes empty lines
     sed -e 's/#.*//' -e 's/[[:space:]]//g' -e '/^$/d' "$1"
@@ -43,27 +51,27 @@ cp -avf "$CTX_DIR/system_files"/. /
 
 # Use nullglob when defining the next two arrays so the lists created are empty in the event of no matches
 shopt -s nullglob
-ADD_LISTS=("$PKG_DIR"/add-*.txt)
-ALL_LISTS=("$PKG_DIR"/*.txt)
+RPM_ADD_LISTS=("$RPM_DIR"/add-*.txt)
+ALL_LISTS=("$RPM_DIR"/*.txt "$FPK_DIR"/*.txt)
 shopt -u nullglob
 
 if [[ ${#ALL_LISTS[@]} -gt 0 ]]; then
     # grep: "-v" shows lines that DON'T match, "-n" line numbers, "-H" file names. "-E" enables extended regex
-    # Run from PKG_DIR with bare names (##*/ strips the directory) so output reads del.txt:5:...
+    # Run from CTX_DIR with paths relative to it (#"$CTX_DIR"/ strips the prefix) so output reads rpm/del.txt:5:...
     # ( ) is a subshell, so cd doesn't affect the rest of the script
-    if (cd "$PKG_DIR" && grep -HnvE "$VALID_LINE" "${ALL_LISTS[@]##*/}"); then
+    if (cd "$CTX_DIR" && grep -HnvE "$VALID_LINE" "${ALL_LISTS[@]#"$CTX_DIR"/}"); then
         echo "Malformed package list(s), aborting" >&2
         exit 1
     fi
 fi
 
 # =============================================================================
-# INSTALL PACKAGES
+# INSTALL RPM PACKAGES
 # =============================================================================
 
 # Install each add-<repo>.txt from <repo> ("fedora" = default repos). Non-Fedora repos must already exist as .repo files
-for list in "${ADD_LISTS[@]}"; do
-    repo=$(basename "$list" .txt)   # /ctx/packages/add-terra.txt -> add-terra
+for list in "${RPM_ADD_LISTS[@]}"; do
+    repo=$(basename "$list" .txt)   # /ctx/rpm/add-terra.txt -> add-terra
     repo=${repo#add-}               # add-terra -> terra   (# removes a prefix)
 
     # convert the output of parse_pkg_lists (which will be a block of packages to install separated by newlines) into an array
@@ -79,12 +87,12 @@ for list in "${ADD_LISTS[@]}"; do
 done
 
 # =============================================================================
-# REMOVE PACKAGES
+# REMOVE RPM PACKAGES
 # =============================================================================
 
 REMOVE_PKGS=()
-if [[ -e $REMOVE_LIST ]]; then
-    mapfile -t REMOVE_PKGS < <(parse_pkg_lists "$REMOVE_LIST")
+if [[ -e $RPM_DEL_LIST ]]; then
+    mapfile -t REMOVE_PKGS < <(parse_pkg_lists "$RPM_DEL_LIST")
 fi
 
 # Filter out packages defined in the remove list that are not present in the base image
@@ -93,13 +101,29 @@ for pkg in "${REMOVE_PKGS[@]}"; do
     if pkg_installed "$pkg"; then
         TO_REMOVE+=("$pkg")
     else
-        echo "$(basename "$REMOVE_LIST"): $pkg not installed, skipping"
+        echo "$(basename "$RPM_DEL_LIST"): $pkg not installed, skipping"
     fi
 done
 
 if [[ ${#TO_REMOVE[@]} -gt 0 ]]; then
     dnf5 -y remove "${TO_REMOVE[@]}"
 fi
+
+# =============================================================================
+# FLATPAKS
+# =============================================================================
+
+mkdir -p "$FPK_PREINSTALL_DIR"
+
+FPK_ADD=()
+if [[ -e $FPK_ADD_LIST ]]; then
+    mapfile -t FPK_ADD < <(parse_pkg_lists "$FPK_ADD_LIST")
+fi
+
+# One preinstall file per app (installed automatically at boot)
+for app in "${FPK_ADD[@]}"; do
+    printf '[Flatpak Preinstall %s]\nBranch=stable\n' "$app" > "$FPK_PREINSTALL_DIR/$app.preinstall"
+done
 
 # =============================================================================
 # FONTS

@@ -1,0 +1,37 @@
+# Install from: flathub
+# Parsed by build_files/build.sh at image build time. One package per line. Text after # is ignored.
+
+app.fluxer.Fluxer
+app.zen_browser.zen
+com.discordapp.Discord
+com.github.tchx84.Flatseal
+com.ktechpit.whatsie
+com.spotify.Client
+com.usebottles.bottles
+com.vysp3r.ProtonPlus
+dev.geopjr.Collision
+io.github.DenysMb.Kontainer
+io.github.flattool.Warehouse
+io.github.plrigaux.sysd-manager
+io.github.zarestia_dev.rclone-manager
+org.chromium.Chromium
+org.fedoraproject.MediaWriter
+org.fkoehler.KTailctl
+org.gnome.DejaDup
+org.gnome.Firmware
+org.jellyfin.JellyfinDesktop
+org.kde.elisa
+org.kde.gwenview
+org.kde.haruna
+org.kde.kalk
+org.kde.kamoso
+org.kde.kclock
+org.kde.kcolorchooser
+org.kde.kid3
+org.kde.kolourpaint
+org.kde.krecorder
+org.kde.okular
+org.nicotine_plus.Nicotine
+org.prismlauncher.PrismLauncher
+org.qbittorrent.qBittorrent
+org.signal.Signal
