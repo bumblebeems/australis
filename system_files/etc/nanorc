@@ -1,0 +1,13 @@
+# Syntax highlighting
+include "/usr/share/nano/*.nanorc"
+include "/usr/share/nano-syntax-highlighting/*.nanorc"
+
+# Tabbing behaviour
+set tabsize 4
+set tabstospaces
+set autoindent
+
+# Misc
+set linenumbers
+set minibar         # combines top bar w/ bottom bar
+set softwrap
