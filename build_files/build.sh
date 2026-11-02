@@ -8,7 +8,7 @@ set -ouex pipefail
 # =============================================================================
 
 CTX_DIR=/ctx
-PKG_DIR="$CTX_DIR/packages"
+PKG_DIR="$CTX_DIR/rpm"
 REMOVE_LIST="$PKG_DIR/del.txt"
 
 # A valid line is: optional package name, optional "# comment". Blank lines are valid.
