@@ -4,6 +4,7 @@
 # CLI
 bat                     # cat clone with improvements
 cdrskin                 # disc burning program
+chezmoi                 # dotfiles manager - australis handles the base system, chezmoi handles my user level config
 gh                      # github CLI
 git-delta               # delta: improved diff viewer
 eza                     # ls clone with improvements
@@ -22,4 +23,4 @@ kdiff3                  # diff software
 yakuake                 # quake-style dropdown terminal
 
 # FONTS
-ibm-plex-fonts-all
+ibm-plex-fonts-all      # my preferred font. nerdfonts-patched versions are not in the repos, so they're downloaded from github direct (see FONTS section in build.sh)
