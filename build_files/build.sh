@@ -7,6 +7,10 @@ set -ouex pipefail
 # SETUP
 # =============================================================================
 
+# Image identity used for os-release and image-info.json
+IMG_PRETTY_NAME="Aurora Australis"
+IMG_REPO="ghcr.io/bumblebeems/australis"
+
 # Source directory
 CTX_DIR=/ctx
 
@@ -43,14 +47,14 @@ parse_pkg_lists() {
 }
 
 # =============================================================================
-# COPY SYSTEM_FILES
+# COPY SYSTEM_FILES/* INTO IMAGE
 # =============================================================================
 
 # Copy the contents of system_files/ of the git repo to /
 cp -avf "$CTX_DIR/system_files"/. /
 
 # =============================================================================
-# UJUST RECIPE ADDITIONS + OVERRIDES
+# UJUST RECIPE OVERRIDES
 # =============================================================================
 
 # Append recipes in overrides.just to 00-entry.just. Top-level recipes override imported ones, but between imports the EARLIER one wins, so an imported override file doesn't work
@@ -122,7 +126,7 @@ if [[ ${#TO_REMOVE[@]} -gt 0 ]]; then
 fi
 
 # =============================================================================
-# FLATPAKS
+# GENERATE FLATPAK .PREINSTALL FILES
 # =============================================================================
 
 mkdir -p "$FPK_PREINSTALL_DIR"
@@ -138,7 +142,42 @@ for app in "${FPK_ADD[@]}"; do
 done
 
 # =============================================================================
-# FONTS
+# TWEAK BRANDING
+# =============================================================================
+
+# ublue images ship with image-info.json which scripts and ujust recipes read to know which image they're on
+IMG_INFO=/usr/share/ublue-os/image-info.json
+jq --arg repo "$IMG_REPO" '
+    .["image-name"] = "australis"
+    | .["image-vendor"] = "bumblebeems"
+    | .["image-tag"] = "latest"
+    | .["image-ref"] |= sub("ghcr\\.io/.*$"; $repo)
+' "$IMG_INFO" > /tmp/image-info.json
+cp /tmp/image-info.json "$IMG_INFO"
+
+OS_RELEASE=/usr/lib/os-release
+
+set_os_release() {
+    # Replace KEY="..." if present, otherwise add it
+    if grep -q "^$1=" "$OS_RELEASE"; then
+        sed -i "s|^$1=.*|$1=\"$2\"|" "$OS_RELEASE"
+    else
+        echo "$1=\"$2\"" >> "$OS_RELEASE"
+    fi
+}
+
+# Retain build version from Aurora's original PRETTY_NAME e.g. Aurora (Version: 44.20261103.1) -> 44.20261103.1
+AURORA_VERSION=$(. "$OS_RELEASE" && echo "$PRETTY_NAME" | sed -n 's/.*Version: \([^)]*\)).*/\1/p')
+AURORA_VERSION=${AURORA_VERSION:-$(. "$OS_RELEASE" && echo "$VERSION_ID")}
+
+set_os_release NAME "$IMG_PRETTY_NAME"
+set_os_release PRETTY_NAME "$IMG_PRETTY_NAME (Version: $AURORA_VERSION)"
+set_os_release HOME_URL "https://github.com/bumblebeems/australis"
+set_os_release BUG_REPORT_URL "https://github.com/bumblebeems/australis/issues"
+set_os_release DEFAULT_HOSTNAME "australis"
+
+# =============================================================================
+# INSTALL ADDITIONAL FONTS
 # =============================================================================
 
 curl -fsSL --retry 3 -o /tmp/IBMPlexMono.tar.xz "$BLEX_URL"
@@ -147,7 +186,7 @@ mkdir -p /usr/share/fonts/blexmono-nerd
 tar -xJf /tmp/IBMPlexMono.tar.xz -C /usr/share/fonts/blexmono-nerd --wildcards 'BlexMonoNerdFontMono-*.ttf' LICENSE.txt
 
 # =============================================================================
-# CHECKS
+# CHECK IF WE BROKE SHIT
 # =============================================================================
 
 # Confirm that 32bit (i686) and 64bit mesa packages have the same version-release. A missing 32bit package also causes a failure
