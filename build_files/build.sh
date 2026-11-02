@@ -42,8 +42,20 @@ parse_pkg_lists() {
     sed -e 's/#.*//' -e 's/[[:space:]]//g' -e '/^$/d' "$1"
 }
 
+# =============================================================================
+# COPY SYSTEM_FILES
+# =============================================================================
+
 # Copy the contents of system_files/ of the git repo to /
 cp -avf "$CTX_DIR/system_files"/. /
+
+# =============================================================================
+# UJUST RECIPE ADDITIONS + OVERRIDES
+# =============================================================================
+
+# Append recipes in overrides.just to 00-entry.just. Top-level recipes override imported ones, but between imports the EARLIER one wins, so an imported override file doesn't work
+echo >> /usr/share/ublue-os/just/00-entry.just
+cat "$CTX_DIR/overrides.just" >> /usr/share/ublue-os/just/00-entry.just
 
 # =============================================================================
 # VALIDATE PACKAGE LISTS
