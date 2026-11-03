@@ -3,6 +3,5 @@
 
 amdgpu_top          # monitor for radeon GPUs
 bitwarden-cli       # cli password manager
-resources           # task manager
 steam               # video games
 starship            # shell prompt

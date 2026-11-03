@@ -3,7 +3,7 @@ This is my personal bootable container image built on top of Universal Blue's [A
 
 ## Notable (and very opinionated) changes
 - **Extra packages.** A bunch of RPMs and Flatpaks I would spend an hour or so installing + setting up anyway, including:
-    - **RPM:** K3b, Resources, Starship, Steam, Zoxide... (see `build_files/rpm/add-*.txt`).
+    - **RPM:** K3b, Resources¹, Starship, Steam, Zoxide... (see `build_files/rpm/add-*.txt`).
     - **Flatpak:** Chromium, Nicotine+, Prism Launcher, SysD Manager, Zen... (see `build_files/flatpak/add.txt`).
 - **Fewer packages too.** I removed packages I never saw myself using from the base image, like Kate (nano, KWrite and VSCode have me covered there). See `build_files/rpm/del.txt` for the full list.
 - **Troublesome ujust recipes disabled.** Some of Aurora's (`install-system-flatpaks`, `rebase-helper` and `toggle-devmode`) *really* don't expect to be outside of their native habitat!
@@ -19,3 +19,6 @@ Aurora australis is the name for aurorae seen in the Southern Hemisphere, where 
 
 ## I want to make my own!
 Have a look at [ublue-os/image-template](https://github.com/ublue-os/image-template) then! That is what I built off to create Australis. There are instructions and resources over there on how to get started too. Have fun!
+
+## Annotations:
+¹ Resources is out-of-date on both Terra and Flatpak actually, so installation is manual for now. You can fetch a .flatpak I built myself from the releases page of this repo.
