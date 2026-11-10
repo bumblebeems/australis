@@ -201,6 +201,13 @@ mkdir -p /usr/share/fonts/blexmono-nerd
 tar -xJf /tmp/IBMPlexMono.tar.xz -C /usr/share/fonts/blexmono-nerd --wildcards 'BlexMonoNerdFontMono-*.ttf' LICENSE.txt
 
 # =============================================================================
+# CLEANUP AND PRUNING
+# =============================================================================
+
+rm -f /usr/share/fish/vendor_conf.d/ublue-fastfetch.fish
+rm -f /etc/profile.d/ublue-fastfetch.sh
+
+# =============================================================================
 # CHECK IF WE BROKE SHIT
 # =============================================================================
 
