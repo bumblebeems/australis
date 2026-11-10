@@ -9,7 +9,8 @@ set -ouex pipefail
 
 # Image identity used for os-release and image-info.json
 IMG_PRETTY_NAME="Aurora Australis"
-IMG_REPO="ghcr.io/bumblebeems/australis"
+IMG_REPO="https://github.com/bumblebeems/australis"
+IMG_GHCR="ghcr.io/bumblebeems/australis"
 
 # Source directory
 CTX_DIR=/ctx
@@ -147,7 +148,7 @@ done
 
 # ublue images ship with image-info.json which scripts and ujust recipes read to know which image they're on
 IMG_INFO=/usr/share/ublue-os/image-info.json
-jq --arg repo "$IMG_REPO" '
+jq --arg repo "$IMG_GHCR" '
     .["image-name"] = "australis"
     | .["image-vendor"] = "bumblebeems"
     | .["image-tag"] = "latest"
@@ -172,9 +173,19 @@ AURORA_VERSION=${AURORA_VERSION:-$(. "$OS_RELEASE" && echo "$VERSION_ID")}
 
 set_os_release NAME "$IMG_PRETTY_NAME"
 set_os_release PRETTY_NAME "$IMG_PRETTY_NAME (Version: $AURORA_VERSION)"
-set_os_release HOME_URL "https://github.com/bumblebeems/australis"
-set_os_release BUG_REPORT_URL "https://github.com/bumblebeems/australis/issues"
+set_os_release HOME_URL "$IMG_REPO"
+set_os_release BUG_REPORT_URL "$IMG_REPO/issues"
 set_os_release DEFAULT_HOSTNAME "australis"
+
+# Modify kinfocenter branding
+
+cat > /usr/share/kde-settings/kde-profile/default/xdg/kcm-about-distrorc <<EOF
+[General]
+LogoPath=/usr/share/pixmaps/system-logo.png
+Name=$IMG_PRETTY_NAME
+Website=$IMG_REPO
+Version=$AURORA_VERSION
+EOF
 
 # =============================================================================
 # ENFORCE SIGNED IMAGES
@@ -182,7 +193,7 @@ set_os_release DEFAULT_HOSTNAME "australis"
 
 # Require australis images to be signed with our cosign key before existing installs will accept updates
 POLICY=/etc/containers/policy.json
-jq --arg repo "$IMG_REPO" '
+jq --arg repo "$IMG_GHCR" '
     .transports.docker[$repo] = [{
         "type": "sigstoreSigned",
         "keyPaths": ["/usr/lib/pki/containers/australis.pub"],
@@ -230,7 +241,7 @@ for enabled_repo in "${ENABLED[@]}"; do
 done
 
 # Validate that policy.json has our signing rule (otherwise unsigned images would be accepted)
-if ! jq -e --arg repo "$IMG_REPO" '.transports.docker[$repo][0].type == "sigstoreSigned"' "$POLICY" >/dev/null; then
-    echo "Signature policy rule for $IMG_REPO missing from $POLICY" >&2
+if ! jq -e --arg repo "$IMG_GHCR" '.transports.docker[$repo][0].type == "sigstoreSigned"' "$POLICY" >/dev/null; then
+    echo "Signature policy rule for $IMG_GHCR missing from $POLICY" >&2
     exit 1
 fi
