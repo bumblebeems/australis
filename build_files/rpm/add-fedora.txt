@@ -12,6 +12,7 @@ fd-find                 # fd: find if it didnt require a manpage to use
 nmap                    # network scanning tool
 perl-File-Find          # required by cowsay (load bearing script very important)
 ripgrep                 # speedy grep alternative
+sbsigntools             # Includes sbverify which is needed for check-anticheat just recipe
 trash-cli               # trash for the command line
 zoxide                  # cd for lazy people
 
