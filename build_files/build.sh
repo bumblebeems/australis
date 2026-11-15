@@ -181,6 +181,7 @@ get_os_release() {
 
 shopt -s inherit_errexit
 IMG_VER=$(get_os_release IMAGE_VERSION)
+AURORA_BUILD_ID=$(get_os_release BUILD_ID)
 shopt -u inherit_errexit
 
 set_os_release NAME "$IMG_NAME"
@@ -189,7 +190,9 @@ set_os_release DEFAULT_HOSTNAME "$IMG_NAME_LOWER"
 set_os_release HOME_URL "$IMG_REPO"
 set_os_release SUPPORT_URL "$IMG_REPO/issues"
 set_os_release BUG_REPORT_URL "$IMG_REPO/issues"
+set_os_release BUILD_ID "$COMMIT_SHA"
 set_os_release IMAGE_ID "$IMG_NAME_LOWER"
+set_os_release AURORA_BUILD_ID "$AURORA_BUILD_ID"
 
 # Modify kinfocenter branding ("Variant" is blank as by default Aurora adds "Kinoite")
 cat > /usr/share/kde-settings/kde-profile/default/xdg/kcm-about-distrorc <<EOF
