@@ -8,7 +8,7 @@ set -ouex pipefail
 # =============================================================================
 
 # Image identity used for os-release and image-info.json
-IMG_PRETTY_NAME="Aurora Australis"
+IMG_NAME="Aurora Australis"
 IMG_REPO="https://github.com/bumblebeems/australis"
 IMG_GHCR="ghcr.io/bumblebeems/australis"
 
@@ -171,9 +171,10 @@ set_os_release() {
 AURORA_VERSION=$(. "$OS_RELEASE" && echo "$PRETTY_NAME" | sed -n 's/.*Version: \([^)]*\)).*/\1/p')
 AURORA_VERSION=${AURORA_VERSION:-$(. "$OS_RELEASE" && echo "$VERSION_ID")}
 
-set_os_release NAME "$IMG_PRETTY_NAME"
-set_os_release PRETTY_NAME "$IMG_PRETTY_NAME (Version: $AURORA_VERSION)"
+set_os_release NAME "$IMG_NAME"
+set_os_release PRETTY_NAME "$IMG_NAME (Version: $AURORA_VERSION)"
 set_os_release HOME_URL "$IMG_REPO"
+set_os_release SUPPORT_URL "$IMG_REPO/issues"
 set_os_release BUG_REPORT_URL "$IMG_REPO/issues"
 set_os_release DEFAULT_HOSTNAME "australis"
 
@@ -182,9 +183,10 @@ set_os_release DEFAULT_HOSTNAME "australis"
 cat > /usr/share/kde-settings/kde-profile/default/xdg/kcm-about-distrorc <<EOF
 [General]
 LogoPath=/usr/share/pixmaps/system-logo.png
-Name=$IMG_PRETTY_NAME
-Website=$IMG_REPO
+Name=$IMG_NAME
 Version=$AURORA_VERSION
+Variant="$VARIANT_ID:$RELEASE_TYPE"
+Website=$IMG_REPO
 EOF
 
 # =============================================================================
@@ -215,8 +217,18 @@ tar -xJf /tmp/IBMPlexMono.tar.xz -C /usr/share/fonts/blexmono-nerd --wildcards '
 # CLEANUP AND PRUNING
 # =============================================================================
 
+# Remove alias of fastfetch -> ublue-fastfetch
 rm -f /usr/share/fish/vendor_conf.d/ublue-fastfetch.fish
 rm -f /etc/profile.d/ublue-fastfetch.sh
+
+# Remove "Aurora Preferences" page from KDE systemsettings (everything except toggle autoupdate is broken on/will break Australis)
+rm -f /usr/share/applications/kcm_ublue.desktop
+rm -f /usr/lib64/qt6/plugins/plasma/kcms/systemsettings/kcm_ublue.so
+
+# Hide gcdmaster from applications list (its built into cdrdao but we prefer k3b)
+if [[ -f /usr/share/applications/gcdmaster.desktop ]]; then
+    echo "NoDisplay=true" >> /usr/share/applications/gcdmaster.desktop
+fi
 
 # =============================================================================
 # CHECK IF WE BROKE SHIT
