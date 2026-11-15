@@ -241,6 +241,24 @@ check-anticheat:
         fi
     fi
 
+    UNSIGNED=()
+    MODULES=0
+    while read -r mod _; do
+        MODULES=$((MODULES + 1))
+        [[ $(cat "/sys/module/$mod/taint" 2>/dev/null) == *E* ]] && UNSIGNED+=("$mod")
+    done </proc/modules
+    # Australis's drivers are signed with a key that's only trusted once Secure Boot is set up, so that's the fix
+    if (( ! SECURE_BOOT )); then
+        skip "Signed kernel modules" "Australis's drivers are only trusted with Secure Boot on. See the guide above."
+    elif (( ${#UNSIGNED[@]} )); then
+        fail "Signed kernel modules" "Unsigned modules loaded: ${UNSIGNED[*]}"
+    elif (( $(cat /proc/sys/kernel/tainted) & 8192 )); then
+        fail "Signed kernel modules" "An unsigned module was loaded during this boot (reboot to clear)"
+    else
+        pass "Signed kernel modules" "All ${MODULES} loaded modules are signed"
+    fi
+
+
     # 5. IOMMU enabled, with passthrough disabled (not required on handhelds)
     PASSTHROUGH=""
     for arg in iommu=pt iommu=off iommu.passthrough=1 amd_iommu=pt amd_iommu=off intel_iommu=off; do
