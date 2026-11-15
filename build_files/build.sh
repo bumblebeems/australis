@@ -8,9 +8,11 @@ set -ouex pipefail
 # =============================================================================
 
 # Image identity used for os-release and image-info.json
-IMG_NAME="Aurora Australis"
-IMG_REPO="https://github.com/bumblebeems/australis"
-IMG_GHCR="ghcr.io/bumblebeems/australis"
+IMG_NAME="Australis"
+IMG_NAME_LOWER="${IMG_NAME,,}"
+IMG_VENDOR="bumblebeems"
+IMG_REPO="https://github.com/$IMG_VENDOR/$IMG_NAME_LOWER"
+IMG_GHCR="ghcr.io/$IMG_VENDOR/$IMG_NAME_LOWER"
 IMG_TAG='latest'
 
 # Source directory
@@ -149,14 +151,10 @@ done
 
 IMG_INFO=/usr/share/ublue-os/image-info.json
 
-# Save info relating to the image we're building off
-UPSTREAM_NAME=$(jq -r '.["image-name"]' "$IMG_INFO")
-UPSTREAM_STREAM=$(jq -r '.["image-tag"]' "$IMG_INFO")
-
 # ublue images ship with image-info.json which scripts and ujust recipes read to know which image they're on
-jq --arg repo "$IMG_GHCR" --arg tag "$IMG_TAG" '
-    .["image-name"] = "australis"
-    | .["image-vendor"] = "bumblebeems"
+jq --arg name "$IMG_NAME_LOWER" --arg vendor "$IMG_VENDOR" --arg tag "$IMG_TAG" --arg repo "$IMG_GHCR" '
+    .["image-name"] = $name
+    | .["image-vendor"] = $vendor
     | .["image-tag"] = $tag
     | .["image-ref"] |= sub("ghcr\\.io/.*$"; $repo)
 ' "$IMG_INFO" > /tmp/image-info.json
@@ -182,23 +180,23 @@ get_os_release() {
 }
 
 shopt -s inherit_errexit
-IMAGE_VER=$(get_os_release IMAGE_VERSION)
+IMG_VER=$(get_os_release IMAGE_VERSION)
 shopt -u inherit_errexit
 
 set_os_release NAME "$IMG_NAME"
-set_os_release PRETTY_NAME "$IMG_NAME (Version: $IMAGE_VER)"
-set_os_release DEFAULT_HOSTNAME "australis"
+set_os_release PRETTY_NAME "$IMG_NAME (Version: $IMG_VER)"
+set_os_release DEFAULT_HOSTNAME "$IMG_NAME_LOWER"
 set_os_release HOME_URL "$IMG_REPO"
 set_os_release SUPPORT_URL "$IMG_REPO/issues"
 set_os_release BUG_REPORT_URL "$IMG_REPO/issues"
-set_os_release IMAGE_ID "australis"
+set_os_release IMAGE_ID "$IMG_NAME_LOWER"
 
 # Modify kinfocenter branding ("Variant" is blank as by default Aurora adds "Kinoite")
 cat > /usr/share/kde-settings/kde-profile/default/xdg/kcm-about-distrorc <<EOF
 [General]
 LogoPath=/usr/share/pixmaps/system-logo.png
 Name=$IMG_NAME
-Version=$AURORA_VERSION
+Version=$IMG_VER
 Variant=
 Website=$IMG_REPO
 EOF
@@ -209,10 +207,10 @@ EOF
 
 # Require australis images to be signed with our cosign key before existing installs will accept updates
 POLICY=/etc/containers/policy.json
-jq --arg repo "$IMG_GHCR" '
+jq --arg repo "$IMG_GHCR" --arg name "$IMG_NAME_LOWER" '
     .transports.docker[$repo] = [{
         "type": "sigstoreSigned",
-        "keyPaths": ["/usr/lib/pki/containers/australis.pub"],
+        "keyPaths": ["/usr/lib/pki/containers/" + $name + ".pub"],
         "signedIdentity": {"type": "matchRepository"}
     }]
 ' "$POLICY" > /tmp/policy.json
