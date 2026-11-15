@@ -11,6 +11,7 @@ set -ouex pipefail
 IMG_NAME="Aurora Australis"
 IMG_REPO="https://github.com/bumblebeems/australis"
 IMG_GHCR="ghcr.io/bumblebeems/australis"
+IMG_TAG='latest'
 
 # Source directory
 CTX_DIR=/ctx
@@ -146,12 +147,17 @@ done
 # TWEAK BRANDING
 # =============================================================================
 
-# ublue images ship with image-info.json which scripts and ujust recipes read to know which image they're on
 IMG_INFO=/usr/share/ublue-os/image-info.json
-jq --arg repo "$IMG_GHCR" '
+
+# Save info relating to the image we're building off
+UPSTREAM_NAME=$(jq -r '.["image-name"]' "$IMG_INFO")
+UPSTREAM_STREAM=$(jq -r '.["image-tag"]' "$IMG_INFO")
+
+# ublue images ship with image-info.json which scripts and ujust recipes read to know which image they're on
+jq --arg repo "$IMG_GHCR" --arg tag "$IMG_TAG" '
     .["image-name"] = "australis"
     | .["image-vendor"] = "bumblebeems"
-    | .["image-tag"] = "latest"
+    | .["image-tag"] = $tag
     | .["image-ref"] |= sub("ghcr\\.io/.*$"; $repo)
 ' "$IMG_INFO" > /tmp/image-info.json
 cp /tmp/image-info.json "$IMG_INFO"
@@ -167,25 +173,33 @@ set_os_release() {
     fi
 }
 
-# Retain build version from Aurora's original PRETTY_NAME e.g. Aurora (Version: 44.20261103.1) -> 44.20261103.1
-AURORA_VERSION=$(. "$OS_RELEASE" && echo "$PRETTY_NAME" | sed -n 's/.*Version: \([^)]*\)).*/\1/p')
-AURORA_VERSION=${AURORA_VERSION:-$(. "$OS_RELEASE" && echo "$VERSION_ID")}
+get_os_release() {
+    if grep -q "^$1=" "$OS_RELEASE"; then
+        sed -n "s|^$1=||p" "$OS_RELEASE" | sed -E 's/^"(.*)"$/\1/; s/^'\''(.*)'\''$/\1/'
+    else
+        return 1
+    fi
+}
+
+shopt -s inherit_errexit
+IMAGE_VER=$(get_os_release IMAGE_VERSION)
+shopt -u inherit_errexit
 
 set_os_release NAME "$IMG_NAME"
-set_os_release PRETTY_NAME "$IMG_NAME (Version: $AURORA_VERSION)"
+set_os_release PRETTY_NAME "$IMG_NAME (Version: $IMAGE_VER)"
+set_os_release DEFAULT_HOSTNAME "australis"
 set_os_release HOME_URL "$IMG_REPO"
 set_os_release SUPPORT_URL "$IMG_REPO/issues"
 set_os_release BUG_REPORT_URL "$IMG_REPO/issues"
-set_os_release DEFAULT_HOSTNAME "australis"
+set_os_release IMAGE_ID "australis"
 
-# Modify kinfocenter branding
-
+# Modify kinfocenter branding ("Variant" is blank as by default Aurora adds "Kinoite")
 cat > /usr/share/kde-settings/kde-profile/default/xdg/kcm-about-distrorc <<EOF
 [General]
 LogoPath=/usr/share/pixmaps/system-logo.png
 Name=$IMG_NAME
 Version=$AURORA_VERSION
-Variant="$VARIANT_ID:$RELEASE_TYPE"
+Variant=
 Website=$IMG_REPO
 EOF
 
