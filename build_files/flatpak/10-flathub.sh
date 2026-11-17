@@ -1,0 +1,47 @@
+#!/bin/bash
+# Preinstall Flatpaks from Flathub at first boot
+
+FLATPAKS=(
+    app.fluxer.Fluxer                           # OSS + federated Discord clone
+    app.zen_browser.zen                         # Firefox based browser with a really good UX (vertical tabs, everything integrated into the sidebar)
+    com.discordapp.Discord
+    com.github.tchx84.Flatseal                  # Flatpak permissions manager
+    com.ktechpit.whatsie                        # Whatsapp client
+    com.spotify.Client
+    com.usebottles.bottles                      # "Easily" run Windows software in Wine (although I haven't had much success with it, may remove?)
+    com.vysp3r.ProtonPlus
+    dev.geopjr.Collision                        # Hash comparision tool
+    io.github.DenysMb.Kontainer                 # Distrobox container management
+    io.github.flattool.Warehouse                # Flatpak utilities (remote management)
+    io.github.plrigaux.sysd-manager
+    io.github.zarestia_dev.rclone-manager
+    io.podman_desktop.PodmanDesktop
+    org.chromium.Chromium
+    org.fedoraproject.MediaWriter               # Create bootable USBs
+    org.fkoehler.KTailctl                       # Tailscale GUI
+    org.gnome.Firmware                          # fwupd GUI
+    org.jellyfin.JellyfinDesktop
+    org.kde.elisa                               # Don't pass that white girl the aux!!! She ALWAYS plays incomprehensible "Adachi Rei" music!!!
+    org.kde.gwenview                            # Image viewer
+    org.kde.haruna                              # Video player
+    org.kde.kalk                                # Calculator
+    org.kde.kamoso                              # Webcam
+    org.kde.kclock
+    org.kde.kcolorchooser
+    org.kde.kid3                                # Modify audio metadata
+    org.kde.kolourpaint
+    org.kde.krecorder                           # Audio recorder
+    org.kde.okular                              # Document viewer
+    org.nicotine_plus.Nicotine                  # Soulseek client (P2P music sharing)
+    org.prismlauncher.PrismLauncher             # Minecraft
+    org.qbittorrent.qBittorrent
+    org.signal.Signal                           # Encrypted messaging app. You can talk about crime and send nudes to people on here!
+)
+
+mkdir -p "$FPK_PREINSTALL_DIR"
+for entry in "${FLATPAKS[@]}"; do
+    app="${entry%%:*}"
+    branch="${entry#*:}"
+    [[ "$branch" == "$entry" ]] && branch="stable"
+    printf '[Flatpak Preinstall %s]\nBranch=%s\n' "$app" "$branch" > "$FPK_PREINSTALL_DIR/$app.preinstall"
+done
