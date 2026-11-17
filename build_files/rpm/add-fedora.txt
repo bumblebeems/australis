@@ -10,6 +10,7 @@ git-delta               # delta: improved diff viewer
 eza                     # ls clone with improvements
 fd-find                 # fd: find if it didnt require a manpage to use
 nmap                    # network scanning tool
+hyfetch                 # neofetch for queers
 perl-File-Find          # required by cowsay (load bearing script very important)
 ripgrep                 # speedy grep alternative
 sbsigntools             # Includes sbverify which is needed for check-anticheat just recipe
