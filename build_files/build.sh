@@ -180,6 +180,9 @@ if [[ -f /usr/share/applications/gcdmaster.desktop ]]; then
     echo "NoDisplay=true" >> /usr/share/applications/gcdmaster.desktop
 fi
 
+# Clean up after dnf5
+rm -rf /var/lib/dnf/repos
+
 # =============================================================================
 # CHECK IF WE BROKE SHIT
 # =============================================================================
