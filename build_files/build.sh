@@ -27,9 +27,13 @@ MULTIMEDIA_REPO_OPTS=(--enable-repo=fedora-multimedia --setopt=fedora-multimedia
 # 64bit and 32bit (i686) mesa packages that must have matching versions
 MESA_PKGS=(mesa-dri-drivers.x86_64 mesa-dri-drivers.i686 mesa-vulkan-drivers.x86_64 mesa-vulkan-drivers.i686)
 
-# Blex = Plex Mono Nerd Font, pinned to a nerd-fonts release. sha256 from the GitHub release asset
+# Blex = Plex Mono Nerd Font, pinned to a nerd-fonts release
 FONT_BLEX_URL="https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/IBMPlexMono.tar.xz"
 FONT_BLEX_SHA="3d226683be9fc35f98683837568497f300307bc9b7aefc1617a368f190ef963a"
+
+# Improved nano syntax highlighting (Galen Guyer) - LINK LAST UPDATED 18/11/26
+NANO_SYNTAX_URL="https://github.com/galenguyer/nano-syntax-highlighting/archive/refs/tags/2026.11.01.tar.gz"
+NANO_SYNTAX_SHA="8b12b151e3f7550835b539c1bff33c30484a311df85adb6173fed1c43099da1c"
 
 # =============================================================================
 # COPY SYSTEM_FILES/* INTO IMAGE
@@ -149,6 +153,15 @@ echo "$FONT_BLEX_SHA  /tmp/IBMPlexMono.tar.xz" | sha256sum -c -
 mkdir -p /usr/share/fonts/blexmono-nerd
 tar -xJf /tmp/IBMPlexMono.tar.xz -C /usr/share/fonts/blexmono-nerd --wildcards 'BlexMonoNerdFontMono-*.ttf' LICENSE.txt
 fc-cache -f /usr/share/fonts/blexmono-nerd
+
+# =============================================================================
+# INSTALL NANO SYNTAX HIGHLIGHTING
+# =============================================================================
+
+curl -fsSL --retry 3 -o /tmp/nano-syntax.tar.gz "$NANO_SYNTAX_URL"
+echo "$NANO_SYNTAX_SHA  /tmp/nano-syntax.tar.gz" | sha256sum -c -
+mkdir -p /usr/share/nano-syntax-highlighting
+tar -xzf /tmp/nano-syntax.tar.gz -C /usr/share/nano-syntax-highlighting --strip-components=1 --wildcards '*.nanorc'
 
 # =============================================================================
 # CLEANUP AND PRUNING
